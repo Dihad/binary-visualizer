@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Visualizer & Converter by Dihad</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Dark theme (default) */
+            --bg-primary: #0d0d0d;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #f0f0f0;
+            --text-secondary: #aaa;
+            --accent-color: #ff9800;
+            --accent-hover: #ffad33;
+            --border-color: #333;
+            --error-color: #ff5252;
+            --success-color: #4CAF50;
+            --info-color: #2196F3;
+            --bit-off: #2a2a2a;
+            --bit-on: #ff9800;
+            --bit-text-on: #121212;
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Light theme variables */
+        .light-theme {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f0f0f0;
+            --text-primary: #121212;
+            --text-secondary: #666;
+            --accent-color: #e65100;
+            --accent-hover: #ff6d00;
+            --border-color: #ddd;
+            --error-color: #d32f2f;
+            --success-color: #388e3c;
+            --info-color: #1976d2;
+            --bit-off: #e0e0e0;
+            --bit-on: #e65100;
+            --bit-text-on: #ffffff;
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        /* Header with theme toggle */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--accent-color);
+            width: 100%;
+        }
+        
+        .header-left {
+            flex: 1;
+        }
+        
+        h1 {
+            color: var(--accent-color);
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(255, 152, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+        
+        .theme-toggle {
+            background-color: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            width: 60px;
+            height: 30px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5px;
+        }
+        
+        .theme-toggle i {
+            font-size: 0.9rem;
+            z-index: 1;
+        }
+        
+        .theme-toggle .fa-sun {
+            color: #ff9800;
+        }
+        
+        .theme-toggle .fa-moon {
+            color: #666;
+        }
+        
+        .theme-toggle::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            left: 3px;
+            transition: transform 0.3s;
+        }
+        
+        .light-theme .theme-toggle::before {
+            transform: translateX(30px);
+        }
+        
+        /* Mode selector */
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+        
+        .mode-btn {
+            padding: 12px 25px;
+            background-color: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .mode-btn.active {
+            background-color: var(--accent-color);
+            color: var(--bit-text-on);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.3);
+        }
+        
+        .mode-btn:hover:not(.active) {
+            background-color: var(--bg-secondary);
+            border-color: var(--accent-color);
+        }
+        
+        /* Bits display - T-shaped layout */
+        .visualizer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .bits-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .byte-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            min-width: 220px;
+        }
+        
+        .byte-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .byte-title {
+            font-size: 1.2rem;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        .byte-value {
+            font-size: 1.1rem;
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .bits-container {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .bit-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .bit-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background-color: var(--bit-off);
+            border: 2px solid var(--border-color);
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+        
+        .bit-button:hover {
+            background-color: var(--bg-tertiary);
+            transform: translateY(-2px);
+        }
+        
+        .bit-button.active {
+            background-color: var(--bit-on);
+            color: var(--bit-text-on);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.4);
+        }
+        
+        .bit-index {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Control panel (bottom of the T) */
+        .control-panel {
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 25px;
+            width: 80%;
+            max-width: 900px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-top: 20px;
+        }
+        
+        .total-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .total-label {
+            font-size: 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .total-value {
+            font-size: 3.5rem;
+            color: var(--accent-color);
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 152, 0, 0.2);
+            word-break: break-all;
+            text-align: right;
+            max-width: 70%;
+        }
+        
+        .converter-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        label {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+        
+        input {
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.2);
+        }
+        
+        .convert-btn {
+            padding: 15px 30px;
+            background-color: var(--accent-color);
+            color: var(--bit-text-on);
+            border: none;
+            border-radius: 8px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0;
+            height: fit-content;
+        }
+        
+        .convert-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+        
+        .error-message {
+            margin-top: 15px;
+            color: var(--error-color);
+            font-size: 1rem;
+            min-height: 25px;
+        }
+        
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .control-btn {
+            padding: 12px 25px;
+            background-color: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-btn:hover {
+            background-color: var(--bg-secondary);
+            border-color: var(--accent-color);
+        }
+        
+        .clear-btn {
+            color: var(--error-color);
+            border-color: var(--error-color);
+        }
+        
+        .clear-btn:hover {
+            background-color: rgba(255, 82, 82, 0.1);
+        }
+        
+        .invert-btn {
+            color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .invert-btn:hover {
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        
+        .random-btn {
+            color: var(--info-color);
+            border-color: var(--info-color);
+        }
+        
+        .random-btn:hover {
+            background-color: rgba(33, 150, 243, 0.1);
+        }
+        
+        /* Info panel */
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 30px;
+        }
+        
+        .instructions, .bit-info {
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            flex: 1;
+        }
+        
+        .instructions h3, .bit-info h3 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions p, .bit-info p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+        
+        .bit-values {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .bit-value-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background-color: var(--bg-tertiary);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .bit-value-item.active {
+            background-color: rgba(255, 152, 0, 0.1);
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        /* Footer */
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: var(--text-secondary);
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            width: 100%;
+            font-size: 1.1rem;
+        }
+        
+        .signature {
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .bits-display {
+                gap: 20px;
+            }
+            
+            .byte-row {
+                min-width: 200px;
+            }
+            
+            .bit-button {
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .bits-display {
+                gap: 15px;
+            }
+            
+            .byte-row {
+                min-width: 180px;
+                padding: 12px;
+            }
+            
+            .bit-button {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            
+            .control-panel {
+                width: 90%;
+            }
+            
+            .info-panel {
+                flex-direction: column;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 20px;
+                align-items: center;
+                text-align: center;
+            }
+            
+            .mode-selector {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .mode-btn {
+                width: 200px;
+                justify-content: center;
+            }
+            
+            .bits-display {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            
+            .byte-row {
+                width: 100%;
+                max-width: 500px;
+            }
+            
+            .bits-container {
+                grid-template-columns: repeat(8, 1fr);
+            }
+            
+            .control-panel {
+                width: 100%;
+                padding: 20px;
+            }
+            
+            .total-display {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .total-value {
+                max-width: 100%;
+                font-size: 2.8rem;
+            }
+            
+            .input-group {
+                min-width: 100%;
+            }
+            
+            .converter-section {
+                flex-direction: column;
+            }
+            
+            .convert-btn {
+                width: 100%;
+            }
+            
+            .controls-row {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .byte-row {
+                padding: 10px;
+            }
+            
+            .bit-button {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .total-value {
+                font-size: 2.2rem;
+            }
+            
+            .instructions, .bit-info {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1><i class="fas fa-microchip"></i> Binary Visualizer & Converter</h1>
+                <p class="subtitle">Visualize and convert 8-bit, 16-bit, 32-bit, and 64-bit binary numbers</p>
+            </div>
+            
+            <div class="theme-toggle" id="theme-toggle">
+                <i class="fas fa-sun"></i>
+                <i class="fas fa-moon"></i>
+            </div>
+        </header>
+        
+        <div class="mode-selector">
+            <button class="mode-btn active" id="mode-8">
+                <i ></i> 8-bit Mode
+            </button>
+            <button class="mode-btn" id="mode-16">
+                <i ></i> 16-bit Mode
+            </button>
+            <button class="mode-btn" id="mode-32">
+                <i></i> </i> 32-bit Mode
+            </button>
+            <button class="mode-btn" id="mode-64">
+                <i ></i> 64-bit Mode
+            </button>
+        </div>
+        
+        <div class="visualizer-container">
+            <!-- Bit displays for each mode -->
+            <div class="bits-display" id="bits-8-display">
+                <!-- 1 byte (8 bits) -->
+            </div>
+            
+            <div class="bits-display" id="bits-16-display" style="display: none;">
+                <!-- 2 bytes (16 bits) -->
+            </div>
+            
+            <div class="bits-display" id="bits-32-display" style="display: none;">
+                <!-- 4 bytes (32 bits) -->
+            </div>
+            
+            <div class="bits-display" id="bits-64-display" style="display: none;">
+                <!-- 8 bytes (64 bits) -->
+            </div>
+            
+            <div class="control-panel">
+                <div class="total-display">
+                    <div class="total-label">Decimal Value:</div>
+                    <div class="total-value" id="total-value">0</div>
+                </div>
+                
+                <div class="converter-section">
+                    <div class="input-group">
+                        <label for="number-input">Enter an integer to convert:</label>
+                        <input type="number" id="number-input" min="0" placeholder="Enter a number...">
+                        <div class="error-message" id="error-message">
+                            Enter a positive integer within the current bit range
+                        </div>
+                    </div>
+                    
+                    <button class="convert-btn" id="convert-btn">
+                        <i class="fas fa-exchange-alt"></i> Convert to Binary
+                    </button>
+                </div>
+                
+                <div class="controls-row">
+                    <button class="control-btn clear-btn" id="clear-btn">
+                        <i class="fas fa-trash-alt"></i> Clear All Bits
+                    </button>
+                    <button class="control-btn invert-btn" id="invert-btn">
+                        <i class="fas fa-random"></i> Invert Bits
+                    </button>
+                    <button class="control-btn random-btn" id="random-btn">
+                        <i class="fas fa-dice"></i> Random Value
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="instructions">
+                <h3><i class="fas fa-info-circle"></i> How to Use</h3>
+                <p>This binary visualizer supports 8-bit, 16-bit, 32-bit, and 64-bit modes:</p>
+                <ul>
+                    <li><strong>Toggle bits</strong>: Click on any bit button to toggle between 0 and 1</li>
+                    <li><strong>Switch mode</strong>: Use the buttons at the top to switch between different bit modes</li>
+                    <li><strong>Convert numbers</strong>: Enter a decimal integer and click "Convert to Binary"</li>
+                    <li><strong>Additional controls</strong>: 
+                        <span style="color: var(--error-color);">Clear All</span>, 
+                        <span style="color: var(--success-color);">Invert Bits</span>, or 
+                        <span style="color: var(--info-color);">Generate Random</span>
+                    </li>
+                    <li><strong>Theme toggle</strong>: Switch between dark and light themes using the toggle in the header</li>
+                </ul>
+                <p>The total decimal value updates in real-time as you toggle bits. Each byte shows its decimal value when all 8 bits are set (255).</p>
+            </div>
+            
+            <div class="bit-info">
+                <h3><i class="fas fa-calculator"></i> Bit Values</h3>
+                <p>Each bit position has a specific decimal value:</p>
+                <div class="bit-values" id="bit-values-container">
+                    <!-- Bit values will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Advanced Binary Visualizer & Converter | <span class="signature">Made by Dihad</span></p>
+        </footer>
+    </div>
+
+    <script>
+        // Configuration
+        const BIT_MODES = {
+            MODE_8: '8-bit',
+            MODE_16: '16-bit',
+            MODE_32: '32-bit',
+            MODE_64: '64-bit'
+        };
+        
+        // State
+        let currentMode = BIT_MODES.MODE_8;
+        let bits8 = [];  // Array of 8 bits
+        let bits16 = []; // Array of 16 bits
+        let bits32 = []; // Array of 32 bits
+        let bits64 = []; // Array of 64 bits
+        
+        // DOM Elements
+        const mode8Btn = document.getElementById('mode-8');
+        const mode16Btn = document.getElementById('mode-16');
+        const mode32Btn = document.getElementById('mode-32');
+        const mode64Btn = document.getElementById('mode-64');
+        const bits8Display = document.getElementById('bits-8-display');
+        const bits16Display = document.getElementById('bits-16-display');
+        const bits32Display = document.getElementById('bits-32-display');
+        const bits64Display = document.getElementById('bits-64-display');
+        const totalValueElement = document.getElementById('total-value');
+        const errorMessageElement = document.getElementById('error-message');
+        const numberInput = document.getElementById('number-input');
+        const convertButton = document.getElementById('convert-btn');
+        const clearButton = document.getElementById('clear-btn');
+        const invertButton = document.getElementById('invert-btn');
+        const randomButton = document.getElementById('random-btn');
+        const themeToggle = document.getElementById('theme-toggle');
+        const bitValuesContainer = document.getElementById('bit-values-container');
+        
+        // Initialize the application
+        function init() {
+            // Initialize bit arrays with default value of 0
+            bits8 = initializeBits(8);
+            bits16 = initializeBits(16);
+            bits32 = initializeBits(32);
+            bits64 = initializeBits(64);
+            
+            // Create the visual displays
+            createBitDisplay(bits8, bits8Display, 8);
+            createBitDisplay(bits16, bits16Display, 16);
+            createBitDisplay(bits32, bits32Display, 32);
+            createBitDisplay(bits64, bits64Display, 64);
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Update the display with initial 0 value
+            updateTotal();
+            updateBitValuesDisplay();
+            
+            // Set initial placeholder with current max value
+            updateInputPlaceholder();
+        }
+        
+        // Initialize an array of bits with all bits set to 0
+        function initializeBits(numBits) {
+            const bits = [];
+            for (let i = 0; i < numBits; i++) {
+                bits.push({
+                    value: 0, // All bits start at 0
+                    decimalValue: Math.pow(2, i),
+                    element: null,
+                    index: i
+                });
+            }
+            return bits;
+        }
+        
+        // Create the visual display for bits
+        function createBitDisplay(bits, container, totalBits) {
+            container.innerHTML = '';
+            
+            const bytes = totalBits / 8;
+            
+            for (let byteIndex = 0; byteIndex < bytes; byteIndex++) {
+                const byteRow = document.createElement('div');
+                byteRow.className = 'byte-row';
+                
+                // Create byte header
+                const byteHeader = document.createElement('div');
+                byteHeader.className = 'byte-header';
+                
+                const byteTitle = document.createElement('div');
+                byteTitle.className = 'byte-title';
+                byteTitle.textContent = `Byte ${byteIndex}`;
+                
+                const byteValue = document.createElement('div');
+                byteValue.className = 'byte-value';
+                byteValue.id = `byte-value-${byteIndex}-${totalBits}`;
+                byteValue.textContent = '0';
+                
+                byteHeader.appendChild(byteTitle);
+                byteHeader.appendChild(byteValue);
+                
+                // Create bits container
+                const bitsContainer = document.createElement('div');
+                bitsContainer.className = 'bits-container';
+                
+                // Create 8 bits for this byte
+                for (let bitInByte = 0; bitInByte < 8; bitInByte++) {
+                    const globalBitIndex = byteIndex * 8 + bitInByte;
+                    const bit = bits[globalBitIndex];
+                    
+                    const bitGroup = document.createElement('div');
+                    bitGroup.className = 'bit-group';
+                    
+                    const bitButton = document.createElement('button');
+                    bitButton.className = 'bit-button';
+                    bitButton.setAttribute('data-bit-index', globalBitIndex);
+                    bitButton.setAttribute('data-bit-mode', totalBits);
+                    bitButton.textContent = '0'; // All bits start at 0
+                    
+                    const bitIndex = document.createElement('div');
+                    bitIndex.className = 'bit-index';
+                    bitIndex.textContent = globalBitIndex;
+                    
+                    bitGroup.appendChild(bitButton);
+                    bitGroup.appendChild(bitIndex);
+                    bitsContainer.appendChild(bitGroup);
+                    
+                    // Store reference to the button
+                    bit.element = bitButton;
+                }
+                
+                byteRow.appendChild(byteHeader);
+                byteRow.appendChild(bitsContainer);
+                container.appendChild(byteRow);
+            }
+            
+            // Add event listeners to the buttons
+            container.addEventListener('click', function(e) {
+                if (e.target.classList.contains('bit-button')) {
+                    const bitIndex = parseInt(e.target.getAttribute('data-bit-index'));
+                    const bitMode = parseInt(e.target.getAttribute('data-bit-mode'));
+                    
+                    // Get the correct bit array based on mode
+                    let bitsArray;
+                    switch(bitMode) {
+                        case 8: bitsArray = bits8; break;
+                        case 16: bitsArray = bits16; break;
+                        case 32: bitsArray = bits32; break;
+                        case 64: bitsArray = bits64; break;
+                        default: bitsArray = bits8;
+                    }
+                    
+                    toggleBit(bitsArray, bitIndex);
+                    updateTotal();
+                    updateByteValues();
+                    updateBitValuesDisplay();
+                }
+            });
+        }
+        
+        // Toggle a bit
+        function toggleBit(bitsArray, bitIndex) {
+            const bit = bitsArray[bitIndex];
+            
+            if (bit.value === 0) {
+                // Turn bit on
+                bit.value = 1;
+                bit.element.textContent = '1';
+                bit.element.classList.add('active');
+            } else {
+                // Turn bit off
+                bit.value = 0;
+                bit.element.textContent = '0';
+                bit.element.classList.remove('active');
+            }
+        }
+        
+        // Update the total value display
+        function updateTotal() {
+            let total = 0;
+            const bits = getCurrentBits();
+            
+            // Calculate total from all bits
+            for (let i = 0; i < bits.length; i++) {
+                if (bits[i].value === 1) {
+                    total += bits[i].decimalValue;
+                }
+            }
+            
+            // Format large numbers with commas
+            totalValueElement.textContent = formatNumberWithCommas(total.toString());
+            
+            // Update the input field to match the current value
+            numberInput.value = total;
+        }
+        
+        // Update byte values display
+        function updateByteValues() {
+            const bits = getCurrentBits();
+            const bytes = bits.length / 8;
+            
+            for (let byteIndex = 0; byteIndex < bytes; byteIndex++) {
+                let byteValue = 0;
+                
+                // Calculate byte value
+                for (let bitInByte = 0; bitInByte < 8; bitInByte++) {
+                    const globalBitIndex = byteIndex * 8 + bitInByte;
+                    if (bits[globalBitIndex].value === 1) {
+                        byteValue += Math.pow(2, bitInByte);
+                    }
+                }
+                
+                // Update display
+                const byteValueElement = document.getElementById(`byte-value-${byteIndex}-${bits.length}`);
+                if (byteValueElement) {
+                    byteValueElement.textContent = byteValue;
+                }
+            }
+        }
+        
+        // Update bit values display in the info panel
+        function updateBitValuesDisplay() {
+            const bits = getCurrentBits();
+            bitValuesContainer.innerHTML = '';
+            
+            // Show the most significant bits for the current mode
+            for (let i = bits.length - 1; i >= 0; i--) {
+                // Only show up to 8 bit values in the panel for readability
+                if (bits.length > 8 && i < bits.length - 8) break;
+                
+                const bitValueItem = document.createElement('div');
+                bitValueItem.className = `bit-value-item ${bits[i].value === 1 ? 'active' : ''}`;
+                
+                const bitLabel = document.createElement('span');
+                bitLabel.textContent = `Bit ${i}`;
+                
+                const bitValue = document.createElement('span');
+                bitValue.textContent = formatNumberWithCommas(bits[i].decimalValue.toString());
+                bitValue.style.fontWeight = 'bold';
+                bitValue.style.color = bits[i].value === 1 ? 'var(--accent-color)' : 'var(--text-secondary)';
+                
+                bitValueItem.appendChild(bitLabel);
+                bitValueItem.appendChild(bitValue);
+                bitValuesContainer.appendChild(bitValueItem);
+            }
+        }
+        
+        // Convert integer to binary and update the bits
+        function convertToBinary() {
+            const inputValue = numberInput.value.trim();
+            
+            // Validate input
+            if (!inputValue || isNaN(inputValue) || inputValue < 0) {
+                showError("Please enter a valid positive integer");
+                return;
+            }
+            
+            const num = parseInt(inputValue);
+            const bits = getCurrentBits();
+            const maxValue = Math.pow(2, bits.length) - 1;
+            
+            if (num > maxValue) {
+                showError(`Number exceeds ${currentMode} maximum of ${formatNumberWithCommas(maxValue.toString())}`);
+                return;
+            }
+            
+            // Clear error message
+            clearError();
+            
+            // Convert to binary string
+            let binaryString = num.toString(2);
+            
+            // Pad with leading zeros
+            while (binaryString.length < bits.length) {
+                binaryString = '0' + binaryString;
+            }
+            
+            // Reverse to match our bit order (LSB first)
+            const reversedBinary = binaryString.split('').reverse().join('');
+            
+            // Update each bit based on binary string
+            for (let i = 0; i < bits.length; i++) {
+                const bitValue = parseInt(reversedBinary[i]);
+                
+                // Only update if the state needs to change
+                if (bitValue !== bits[i].value) {
+                    bits[i].value = bitValue;
+                    
+                    // Update the button appearance
+                    if (bitValue === 1) {
+                        bits[i].element.textContent = '1';
+                        bits[i].element.classList.add('active');
+                    } else {
+                        bits[i].element.textContent = '0';
+                        bits[i].element.classList.remove('active');
+                    }
+                }
+            }
+            
+            updateTotal();
+            updateByteValues();
+            updateBitValuesDisplay();
+        }
+        
+        // Clear all bits
+        function clearAllBits() {
+            const bits = getCurrentBits();
+            
+            for (let i = 0; i < bits.length; i++) {
+                bits[i].value = 0;
+                bits[i].element.textContent = '0';
+                bits[i].element.classList.remove('active');
+            }
+            
+            updateTotal();
+            updateByteValues();
+            updateBitValuesDisplay();
+            clearError();
+        }
+        
+        // Invert all bits
+        function invertBits() {
+            const bits = getCurrentBits();
+            
+            for (let i = 0; i < bits.length; i++) {
+                bits[i].value = bits[i].value === 0 ? 1 : 0;
+                
+                // Update the button appearance
+                if (bits[i].value === 1) {
+                    bits[i].element.textContent = '1';
+                    bits[i].element.classList.add('active');
+                } else {
+                    bits[i].element.textContent = '0';
+                    bits[i].element.classList.remove('active');
+                }
+            }
+            
+            updateTotal();
+            updateByteValues();
+            updateBitValuesDisplay();
+        }
+        
+        // Generate random value
+        function generateRandomValue() {
+            const bits = getCurrentBits();
+            const maxValue = Math.pow(2, bits.length) - 1;
+            
+            // Generate a random number within the range
+            const randomNum = Math.floor(Math.random() * maxValue);
+            
+            // Set the input field
+            numberInput.value = randomNum.toString();
+            
+            // Convert to binary
+            convertToBinary();
+        }
+        
+        // Get the current bit array based on mode
+        function getCurrentBits() {
+            switch(currentMode) {
+                case BIT_MODES.MODE_8: return bits8;
+                case BIT_MODES.MODE_16: return bits16;
+                case BIT_MODES.MODE_32: return bits32;
+                case BIT_MODES.MODE_64: return bits64;
+                default: return bits8;
+            }
+        }
+        
+        // Get the current bit display element based on mode
+        function getCurrentDisplay() {
+            switch(currentMode) {
+                case BIT_MODES.MODE_8: return bits8Display;
+                case BIT_MODES.MODE_16: return bits16Display;
+                case BIT_MODES.MODE_32: return bits32Display;
+                case BIT_MODES.MODE_64: return bits64Display;
+                default: return bits8Display;
+            }
+        }
+        
+        // Switch between bit modes
+        function switchMode(newMode) {
+            // Update active button
+            mode8Btn.classList.remove('active');
+            mode16Btn.classList.remove('active');
+            mode32Btn.classList.remove('active');
+            mode64Btn.classList.remove('active');
+            
+            // Hide all displays
+            bits8Display.style.display = 'none';
+            bits16Display.style.display = 'none';
+            bits32Display.style.display = 'none';
+            bits64Display.style.display = 'none';
+            
+            // Show selected display and update active button
+            switch(newMode) {
+                case BIT_MODES.MODE_8:
+                    mode8Btn.classList.add('active');
+                    bits8Display.style.display = 'flex';
+                    break;
+                case BIT_MODES.MODE_16:
+                    mode16Btn.classList.add('active');
+                    bits16Display.style.display = 'flex';
+                    break;
+                case BIT_MODES.MODE_32:
+                    mode32Btn.classList.add('active');
+                    bits32Display.style.display = 'flex';
+                    break;
+                case BIT_MODES.MODE_64:
+                    mode64Btn.classList.add('active');
+                    bits64Display.style.display = 'flex';
+                    break;
+            }
+            
+            currentMode = newMode;
+            
+            // Update input placeholder with current max value
+            updateInputPlaceholder();
+            
+            // Update displays
+            updateTotal();
+            updateByteValues();
+            updateBitValuesDisplay();
+        }
+        
+        // Update input placeholder based on current mode
+        function updateInputPlaceholder() {
+            const bits = getCurrentBits();
+            const maxValue = Math.pow(2, bits.length) - 1;
+            numberInput.placeholder = `Max: ${formatNumberWithCommas(maxValue.toString())}`;
+        }
+        
+        // Show error message
+        function showError(message) {
+            errorMessageElement.textContent = message;
+            errorMessageElement.style.color = "var(--error-color)";
+        }
+        
+        // Clear error message
+        function clearError() {
+            errorMessageElement.textContent = "Enter a positive integer within the current bit range";
+            errorMessageElement.style.color = "var(--accent-color)";
+        }
+        
+        // Format number with commas
+        function formatNumberWithCommas(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        
+        // Toggle between light and dark themes
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            
+            // Save theme preference to localStorage
+            const isLightTheme = document.body.classList.contains('light-theme');
+            localStorage.setItem('binaryVisualizerTheme', isLightTheme ? 'light' : 'dark');
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Mode switching
+            mode8Btn.addEventListener('click', () => switchMode(BIT_MODES.MODE_8));
+            mode16Btn.addEventListener('click', () => switchMode(BIT_MODES.MODE_16));
+            mode32Btn.addEventListener('click', () => switchMode(BIT_MODES.MODE_32));
+            mode64Btn.addEventListener('click', () => switchMode(BIT_MODES.MODE_64));
+            
+            // Convert button
+            convertButton.addEventListener('click', convertToBinary);
+            
+            // Enter key in input field
+            numberInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    convertToBinary();
+                }
+            });
+            
+            // Control buttons
+            clearButton.addEventListener('click', clearAllBits);
+            invertButton.addEventListener('click', invertBits);
+            randomButton.addEventListener('click', generateRandomValue);
+            
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // Update bit values display when input changes
+            numberInput.addEventListener('input', updateBitValuesDisplay);
+        }
+        
+        // Load saved theme preference
+        function loadThemePreference() {
+            const savedTheme = localStorage.getItem('binaryVisualizerTheme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+            }
+        }
+        
+        // Initialize the application when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            loadThemePreference();
+            init();
+        });
+    </script>
+</body>
+</html>
